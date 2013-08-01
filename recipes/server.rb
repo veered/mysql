@@ -85,7 +85,8 @@ if platform_family?('windows')
   
   windows_package node['mysql']['server']['packages'].first do
     source "#{Chef::Config[:file_cache_path]}/#{package_file}"
-	options "INSTALLDIR=\"#{install_dir}\""
+    options "INSTALLDIR=\"#{install_dir}\""
+    notifies :run, "execute[install mysql service]", :immediately
   end
 
   def package(*args, &blk)
@@ -119,6 +120,7 @@ unless platform_family?(%w{mac_os_x})
   if platform_family? 'windows'
     require 'win32/service'
 
+    ENV['PATH'] += ";#{node['mysql']['bin_dir']}"
     windows_path node['mysql']['bin_dir'] do
       action :add
     end
@@ -184,7 +186,7 @@ end
 execute "assign-root-password" do
   command "\"#{node['mysql']['mysqladmin_bin']}\" -u root password \"#{node['mysql']['server_root_password']}\""
   action :run
-  only_if "\"#{node['mysql']['mysql_bin']}\" -u root -e 'show databases;'"
+  only_if "\"#{node['mysql']['mysql_bin']}\" -u root -e \"show databases;\""
 end
 
 unless platform_family?(%w{mac_os_x})
